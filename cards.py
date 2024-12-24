@@ -3,7 +3,7 @@ suits = ['hearts', 'diamonds', 'clubs', 'spades']
 class Card:
     def __init__(self, suit, value):
         assert suit in suits, "invalid suit"
-        assert value in [int(i) for i in range(2, 15)], "invalid value"
+        assert value in [i for i in range(2, 15)], "invalid value"
         self.suit = suit
         self.value = value
 

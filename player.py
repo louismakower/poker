@@ -10,7 +10,7 @@ class Player:
         self.in_hand = True
         self.recent_bet = 0
 
-    def place_bet(self, table_cards):
+    def place_bet(self, table_cards, max_bet_so_far):
         raise NotImplementedError
 
     def match(self, table_cards, high_bet):
@@ -42,20 +42,35 @@ class Player:
 
         return best_selection
 
+class RLPlayer(Player):
+    def place_bet(self, state):
+        bet = self.money / 5
+        self.recent_bet = bet
+        return True, bet
+
+    def match(self, table_cards, high_bet):
+        if high_bet - self.recent_bet < self.money:
+            return True, high_bet - self.recent_bet
+        else:
+            return False, None
+
 class AutomaticPlayer(Player):
-    def place_bet(self, table_cards):
+    def place_bet(self, table_cards, max_bet_so_far):
         best_hand = self.get_best_hand(table_cards)
         best_hand_score = evaluation(best_hand)[0]
         if best_hand_score > 4:
-            bet = self.money # all in for hand above 3
+            bet, amount = True, self.money # all in for hand above 4
         elif best_hand_score > 2:
-            bet = self.money / 3
+            bet, amount = True, self.money / 3
         else:
-            bet = 0
+            bet, amount = True, 0
 
-        assert bet <= self.money
-        self.recent_bet = bet
-        return bet
+        assert amount <= self.money
+        if amount < max_bet_so_far:
+            bet, amount = False, None
+
+        self.recent_bet = amount
+        return bet, amount
 
     def match(self, table_cards, high_bet):
         if self.recent_bet == high_bet:
@@ -75,16 +90,20 @@ class AutomaticPlayer(Player):
         best_hand_score = evaluation(best_hand)[0]
 
         if best_hand_score > 2 and fraction_of_prev_bet < 0.5:
-            # if feeling lucky with decent hand, match
+            # if decent hand and not too much to bet, match
             return True, high_bet - self.recent_bet
         else:
             return False, None
 
 class RandomPlayer(Player):
-    def place_bet(self, table_cards):
-        bet = random.random() * (self.money / 2)
-        self.recent_bet = bet
-        return bet
+    def place_bet(self, table_cards, max_bet_so_far):
+        amount = random.random() * (self.money / 2)
+        if amount < max_bet_so_far:
+            bet, amount = False, None
+        else:
+            bet = True
+        self.recent_bet = amount
+        return bet, amount
 
     def match(self, table_cards, high_bet):
         if self.recent_bet == high_bet:
