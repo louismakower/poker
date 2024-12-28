@@ -42,7 +42,7 @@ def evaluation(cards: list[Card]):
     is_pair = max(values_counts.values()) == 2
 
     if is_royal:
-        print("royal flush"*100)
+        # print("royal flush"*100)
         return [values['royal flush']] # None
     if is_straight and is_flush:
         return [values['straight flush']] + [cards[-1].value] # value of highest card

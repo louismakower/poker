@@ -18,9 +18,7 @@ class Environment:
         self.table.new_hand_deal()
         self.table.deal_table_cards()
         self.num_hands += 1
-        # face_up_cards = [item for card in self.table.face_up_cards for item in [card.value, suit_values[card.suit]]]
         face_up_cards = self.table.face_up_cards
-        # player_cards = [item for card in self.rl_player.cards for item in [card.value, suit_values[card.suit]]]
         player_cards = self.rl_player.cards
         player_money = self.rl_player.money
         state = [face_up_cards, player_cards, player_money]
@@ -37,9 +35,7 @@ class Environment:
         self.table.new_hand_deal()
         self.table.deal_table_cards()
 
-        # face_up_cards = [item for card in self.table.face_up_cards for item in [card.value, suit_values[card.suit]]]
         face_up_cards = self.table.face_up_cards
-        # player_cards = [item for card in self.rl_player.cards for item in [card.value, suit_values[card.suit]]]
         player_cards = self.rl_player.cards
         player_money = self.rl_player.money
         next_state = [face_up_cards, player_cards, player_money]
@@ -52,7 +48,7 @@ if __name__ == "__main__":
     total_reward = [0]
     money_per_player = 100
     rl_player = AutomaticPlayer('Louis', money_per_player)
-    env = Environment(rl_player, 10, money_per_player, verbose=1)
+    env = Environment(rl_player, 3, money_per_player, verbose=1, terminate=100)
     state = env.reset()
     # print([str(card) for player in env.table.players_list for card in player.cards])
     while not terminated:
@@ -72,4 +68,3 @@ if __name__ == "__main__":
 # state: (cards on table, cards in hand, current bet, money in hand, amount to match)
 # action: whether to match (true or false)
 # reward: score on that round
-
