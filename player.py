@@ -43,10 +43,22 @@ class Player:
         return best_selection
 
 class RLPlayer(Player):
+    def __init__(self, name, money, dqn):
+        super().__init__(name, money)
+        self.dqn = dqn
+
     def place_bet(self, state):
-        bet = self.money / 5
-        self.recent_bet = bet
-        return True, bet
+        bet = self.dqn(state)
+        if 0 < bet <= self.money:
+            self.recent_bet = bet
+            return True, bet
+        elif bet >= self.money:
+            self.recent_bet = self.money
+            return True, self.money
+        elif bet <= 0:
+            self.recent_bet = 0
+            return False, None
+        assert False, "This shouldn't get here"
 
     def match(self, table_cards, high_bet):
         if high_bet - self.recent_bet < self.money:

@@ -143,7 +143,7 @@ class Table:
         self.highest_bet = 0
         remove_players = []
         for player in self.players_list:
-            if isinstance(player, AutomaticPlayer):
+            if isinstance(player, RLPlayer):
                 bet, amount = rl_bet, rl_amount
             else:
                 bet, amount = player.place_bet(self.face_up_cards, self.highest_bet)

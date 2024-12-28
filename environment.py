@@ -1,28 +1,35 @@
 from table import Table
-from player import RandomPlayer, RLPlayer, AutomaticPlayer
+from player import RandomPlayer, AutomaticPlayer
+import random
 import matplotlib.pyplot as plt
+import torch
 suit_values = {'hearts':0, 'diamonds':1, 'clubs':2, 'spades':3} # should do one hot encoding here
 
 class Environment:
     def __init__(self, player, num_bots, initial_money, verbose=0, terminate=500):
         other_players = [RandomPlayer(f"Bot {i+1}", initial_money) for i in range(num_bots)]
         self.players = [player] + other_players
+        random.shuffle(self.players)
         self.verbose = verbose
         self.rl_player = player
         self.num_hands = 0
         self.table = None
         self.terminate = terminate
 
+    def get_state(self):
+        face_up_cards = [item for card in self.table.face_up_cards for item in [card.value, suit_values[card.suit]]]
+        player_cards = [item for card in self.rl_player.cards for item in [card.value, suit_values[card.suit]]]
+        player_money = self.rl_player.money
+        state = face_up_cards + player_cards + [player_money]
+        state = [float(num) for num in state]
+        return torch.tensor(state)
+
     def reset(self):
         self.table = Table(self.players, verbose=self.verbose)
         self.table.new_hand_deal()
         self.table.deal_table_cards()
-        self.num_hands += 1
-        face_up_cards = self.table.face_up_cards
-        player_cards = self.rl_player.cards
-        player_money = self.rl_player.money
-        state = [face_up_cards, player_cards, player_money]
-        return state
+        self.num_hands = 1
+        return self.get_state()
 
     def step(self, bet, amount):
         previous_money = self.rl_player.money
@@ -35,20 +42,16 @@ class Environment:
         self.table.new_hand_deal()
         self.table.deal_table_cards()
 
-        face_up_cards = self.table.face_up_cards
-        player_cards = self.rl_player.cards
-        player_money = self.rl_player.money
-        next_state = [face_up_cards, player_cards, player_money]
         terminated = False if self.num_hands < self.terminate else True
 
-        return next_state, reward, terminated
+        return self.get_state(), reward, terminated
 
 if __name__ == "__main__":
     terminated = False
     total_reward = [0]
     money_per_player = 100
     rl_player = AutomaticPlayer('Louis', money_per_player)
-    env = Environment(rl_player, 3, money_per_player, verbose=1, terminate=100)
+    env = Environment(rl_player, 3, money_per_player, verbose=0, terminate=100)
     state = env.reset()
     # print([str(card) for player in env.table.players_list for card in player.cards])
     while not terminated:

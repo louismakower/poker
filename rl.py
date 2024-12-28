@@ -1,7 +1,8 @@
 from rl_utils import DQN, ReplayBuffer, greedy_action, epsilon_greedy, update_target, loss
 import torch
 import torch.optim as optim
-
+from environment import Environment
+from player import RLPlayer
 
 def decay_epsilon(epsilon, episode_number, start_decay, end_decay, E, min_epsilon, initial_epsilon):
     decay_constant = (initial_epsilon - min_epsilon) / (E*(end_decay - start_decay))
@@ -29,14 +30,18 @@ min_epsilon = 0.
 runs_results = []
 policy_nets = []
 
-env = gym.make('CartPole-v1')
+initial_money = 100
+
 for run in range(NUM_RUNS):
     print(f"Starting run {run + 1} of {NUM_RUNS}")
-    layers = [4] + [A] * B + [2]
+    layers = [15] + [A] * B + [1]
     policy_net = DQN(layers)
     target_net = DQN(layers)
     update_target(target_net, policy_net)
     target_net.eval()
+
+    rl_player = RLPlayer('RL player', initial_money, policy_net)
+    rl_env = Environment(rl_player, 3, initial_money)
 
     optimizer = optim.SGD(policy_net.parameters(), lr=C)
     memory = ReplayBuffer(D)
@@ -52,28 +57,24 @@ for run in range(NUM_RUNS):
         if (i_episode + 1) % 50 == 0:
             print("episode ", i_episode + 1, "/ ", E)
 
-        observation, info = env.reset()
-        state = torch.tensor(observation).float()
+        state = rl_env.reset()
         # print(epsilon)
 
         epsilon = decay_epsilon(epsilon, i_episode, start_decay, end_decay, E, min_epsilon, F)
         epsilons.append(epsilon)
-        done = False
         terminated = False
         t = 0
-        while not (done or terminated):
-            # while not done:
-
+        while not terminated:
             # Select and perform an action
-            action = epsilon_greedy(epsilon, policy_net, state)
+            action = rl_player.place_bet(state)
+            action = [float(num) if not num is None else 0. for num in action]
 
-            observation, reward, done, terminated, info = env.step(action)
-            # observation, reward, done, info = env.step(action)
+            state, reward, terminated = rl_env.step(action[0], action[1])
             reward = torch.tensor([reward]) / G
             action = torch.tensor([action])
-            next_state = torch.tensor(observation).reshape(-1).float()
+            next_state = torch.tensor(state).reshape(-1).float()
 
-            memory.push([state, action, next_state, reward, torch.tensor([done])])
+            memory.push([state, action, next_state, reward, torch.tensor([terminated])])
 
             # Move to the next state
             state = next_state
@@ -90,7 +91,7 @@ for run in range(NUM_RUNS):
                 mse_loss.backward()
                 optimizer.step()
 
-            if done or terminated:
+            if terminated:
                 # if done:
                 episode_durations.append(t + 1)
             t += 1
