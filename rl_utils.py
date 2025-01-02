@@ -5,7 +5,6 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-
 class ReplayBuffer():
     def __init__(self, size: int):
         """Replay buffer initialisation
@@ -130,7 +129,6 @@ def loss(policy_dqn: DQN, target_dqn: DQN,
     Returns:
         Float scalar tensor with loss value
     """
-
     bellman_targets = (~dones).reshape(-1) * (target_dqn(next_states)).max(1).values + rewards.reshape(-1)
     q_values = policy_dqn(states).gather(1, actions).reshape(-1)
     return ((q_values - bellman_targets) ** 2).mean()

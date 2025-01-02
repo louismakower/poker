@@ -1,6 +1,7 @@
 from evaluator import beats, evaluation, equals
 from itertools import combinations
 import random
+import torch
 
 class Player:
     def __init__(self, name, money):
@@ -47,21 +48,27 @@ class RLPlayer(Player):
         super().__init__(name, money)
         self.dqn = dqn
 
-    def place_bet(self, state):
-        bet = self.dqn(state)
-        if 0 < bet <= self.money:
-            self.recent_bet = bet
-            return True, bet
-        elif bet >= self.money:
-            self.recent_bet = self.money
-            return True, self.money
-        elif bet <= 0:
+    def epsilon_greedy(self, state, epsilon):
+        q_values = self.dqn(state)
+        num_actions = q_values.shape[0]
+        greedy_act = int(torch.argmax(q_values))
+        p = float(torch.rand(1))
+        if p > epsilon:
+            return greedy_act
+        else:
+            return random.randint(0, num_actions - 1)
+
+    def place_bet(self, action):
+        if action == 0:
             self.recent_bet = 0
             return False, None
-        assert False, "This shouldn't get here"
+        else:
+            bet = self.money / action
+            self.recent_bet = bet
+            return True, bet
 
     def match(self, table_cards, high_bet):
-        if high_bet - self.recent_bet < self.money:
+        if high_bet - self.recent_bet <= self.money:
             return True, high_bet - self.recent_bet
         else:
             return False, None
