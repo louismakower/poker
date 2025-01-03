@@ -5,7 +5,6 @@ from environment import Environment
 from player import RLPlayer
 import matplotlib.pyplot as plt
 import numpy as np
-import pickle
 
 def decay_epsilon(epsilon, episode_number, start_decay, end_decay, E, min_epsilon, initial_epsilon):
     decay_constant = (initial_epsilon - min_epsilon) / (E*(end_decay - start_decay))
@@ -13,17 +12,17 @@ def decay_epsilon(epsilon, episode_number, start_decay, end_decay, E, min_epsilo
         epsilon = max(min_epsilon, epsilon - decay_constant)
     return epsilon
 
-NUM_RUNS = 10 # this was 10
+NUM_RUNS = 20 # this was 10
 
 # hyperparams
 hidden_layer_size = 70
 num_hidden_layers = 1
 lr = 0.005
-replay_buffer_size = 10000
+replay_buffer_size = 70000
 total_num_episodes = 500
 initial_epsilon = 1
-reward_scaler = 1
-batch_size = 72
+reward_scaler = 10
+batch_size = 128
 steps_to_update_target_policy = 500
 start_decay = 0.
 end_decay = 0.8
